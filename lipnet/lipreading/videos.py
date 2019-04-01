@@ -152,6 +152,8 @@ class Video(object):
         HORIZONTAL_PAD = 0.19
         normalize_ratio = None
         mouth_frames = []
+        m = 0
+        print(len(frames))
         for frame in frames:
             dets = detector(frame, 1)
             shape = None
@@ -176,7 +178,7 @@ class Video(object):
 
                 normalize_ratio = MOUTH_WIDTH / float(mouth_right - mouth_left)
 
-            new_img_shape = (int(frame.shape[0] * normalize_ratio), int(frame.shape[1] * normalize_ratio))
+            new_img_shape = (int(frame.shape[0] * normalize_ratio   ), int(frame.shape[1] * normalize_ratio))
             resized_img = imresize(frame, new_img_shape)
 
             mouth_centroid_norm = mouth_centroid * normalize_ratio

@@ -146,6 +146,20 @@ class Video(object):
         self.mouth = np.array(frames)
         self.set_data(frames)
 
+    def square_of_mouth(self,points):
+        det = 0
+        l = len(points)
+        for i in range(l-1):
+            x1 = [points[i,0],points[i,1]]
+            x2 = [points[i+1,0],points[i+1,1]]
+            a = [x1,x2]
+            det += abs(np.linalg.det(a))
+        x1 = [points[l-1,0],points[l-1,1]]
+        x2 = [points[0,0],points[0,1]]
+        det += abs(np.linalg.det(a))
+        det = det/2
+        return det
+
     def get_frames_mouth(self, detector, predictor, frames):
         MOUTH_WIDTH = 100
         MOUTH_HEIGHT = 50
@@ -169,6 +183,10 @@ class Video(object):
                     continue
                 mouth_points.append((part.x,part.y))
             np_mouth_points = np.array(mouth_points)
+
+            sq = self.square_of_mouth(np_mouth_points)
+            print(sq,m)
+            m = m + 1
 
             mouth_centroid = np.mean(np_mouth_points[:, -2:], axis=0)
 

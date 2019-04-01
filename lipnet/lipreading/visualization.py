@@ -27,3 +27,9 @@ def show_video_subtitle(frames, subtitle):
             img.set_data(frame)
         fig.canvas.draw()
         i += 1
+
+def show_square(sq):
+    plt.plot(sq)
+    plt.ylabel('square')
+    plt.xlabel('frame')
+    plt.show()

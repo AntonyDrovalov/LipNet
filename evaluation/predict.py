@@ -1,5 +1,5 @@
 from lipnet.lipreading.videos import Video
-from lipnet.lipreading.visualization import show_video_subtitle
+from lipnet.lipreading.visualization import show_video_subtitle,show_square
 from lipnet.core.decoders import Decoder
 from lipnet.lipreading.helpers import labels_to_text
 from lipnet.utils.spell import Spell
@@ -28,6 +28,8 @@ def predict(weight_path, video_path, absolute_max_string_len=32, output_size=28)
     else:
         video.from_frames(video_path)
     print "Data loaded.\n"
+
+    show_square(video.sq)
 
     if K.image_data_format() == 'channels_first':
         img_c, frames_n, img_w, img_h = video.data.shape

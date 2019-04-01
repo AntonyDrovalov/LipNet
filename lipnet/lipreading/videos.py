@@ -109,6 +109,7 @@ class Video(object):
             raise AttributeError('Face video need to be accompanied with face predictor')
         self.face_predictor_path = face_predictor_path
         self.vtype = vtype
+        self.sq = []
 
     def from_frames(self, path):
         frames_path = sorted([os.path.join(path, x) for x in os.listdir(path)])
@@ -184,8 +185,8 @@ class Video(object):
                 mouth_points.append((part.x,part.y))
             np_mouth_points = np.array(mouth_points)
 
-            sq = self.square_of_mouth(np_mouth_points)
-            print(sq,m)
+            self.sq.append(self.square_of_mouth(np_mouth_points))
+            print(self.sq[m],m)
             m = m + 1
 
             mouth_centroid = np.mean(np_mouth_points[:, -2:], axis=0)

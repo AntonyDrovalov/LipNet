@@ -110,6 +110,7 @@ class Video(object):
         self.face_predictor_path = face_predictor_path
         self.vtype = vtype
         self.sq = []
+        self.split_nums = []
 
     def from_frames(self, path):
         frames_path = sorted([os.path.join(path, x) for x in os.listdir(path)])
@@ -161,6 +162,35 @@ class Video(object):
         det = det/2
         return det
 
+    def split(self,num_current,window_size=20, limit=30):
+        
+        avg_sq = 0
+        for i in range(num_current - window_size,num_current):
+            avg_sq += self.sq[i]
+        avg_sq = avg_sq/window_size
+
+        
+        
+        if(abs(self.sq[num_current-1] - avg_sq) < limit):
+            return num_current
+        else:
+            return -1
+
+    def split_commands(self):
+        #if(not self.split_nums):
+        #    return frames
+        #else:
+            min_num = 0
+            max_num = self.split_nums[0]
+            for i in range(len(self.split_nums)):
+                if(max_num - min_num > 50):
+                    print(self.split_nums[i])
+                    min_num = self.split_nums[i]
+                else:
+                    max_num = self.split_nums[i]
+        
+        
+
     def get_frames_mouth(self, detector, predictor, frames):
         MOUTH_WIDTH = 100
         MOUTH_HEIGHT = 50
@@ -188,6 +218,12 @@ class Video(object):
             self.sq.append(self.square_of_mouth(np_mouth_points))
             print(self.sq[m],m)
             m = m + 1
+
+            if(m>25):
+                split_frame = self.split(m)
+                if(split_frame != -1):
+                    self.split_nums.append(split_frame)
+                    print(split_frame)
 
             mouth_centroid = np.mean(np_mouth_points[:, -2:], axis=0)
 

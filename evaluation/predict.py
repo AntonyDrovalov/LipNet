@@ -29,6 +29,7 @@ def predict(weight_path, video_path, absolute_max_string_len=32, output_size=28)
         video.from_frames(video_path)
     print "Data loaded.\n"
 
+    video.split_commands()
     show_square(video.sq)
 
     if K.image_data_format() == 'channels_first':

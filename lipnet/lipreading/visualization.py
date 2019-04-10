@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
+import wave
+import numpy as np
 
 def show_video_subtitle(frames, subtitle):
     fig, ax = plt.subplots()
@@ -28,8 +30,23 @@ def show_video_subtitle(frames, subtitle):
         fig.canvas.draw()
         i += 1
 
-def show_square(sq):
+def show_square(sq,avg_sq):
     plt.plot(sq)
+    plt.plot(avg_sq)
+
     plt.ylabel('square')
     plt.xlabel('frame')
+    plt.show()
+
+
+
+def show_sq_audio(sq,path):
+    spf = wave.open(path,'r')
+    signal = spf.readframes(-1)
+    signal = np.fromstring(signal, 'Int16')
+
+    
+    plt.title('Signal ')
+    plt.plot(signal)
+    plt.plot(sq)
     plt.show()

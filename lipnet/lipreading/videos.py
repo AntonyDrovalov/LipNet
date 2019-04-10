@@ -110,6 +110,7 @@ class Video(object):
         self.face_predictor_path = face_predictor_path
         self.vtype = vtype
         self.sq = []
+        self.avg_sq = []
         self.split_nums = []
 
     def from_frames(self, path):
@@ -120,6 +121,12 @@ class Video(object):
 
     def from_video(self, path):
         frames = self.get_video_frames(path)
+        self.handle_type(frames)
+        return self
+
+    def from_video_test(self,path,x):
+        frames = self.get_video_frames(path)
+        frames = frames[0:x]
         self.handle_type(frames)
         return self
 
@@ -162,14 +169,14 @@ class Video(object):
         det = det/2
         return det
 
-    def split(self,num_current,window_size=20, limit=30):
+    def split(self,num_current,window_size=20, limit=50):
         
         avg_sq = 0
         for i in range(num_current - window_size,num_current):
             avg_sq += self.sq[i]
         avg_sq = avg_sq/window_size
+        self.avg_sq.append(avg_sq)
 
-        
         
         if(abs(self.sq[num_current-1] - avg_sq) < limit):
             return num_current
@@ -180,15 +187,28 @@ class Video(object):
         #if(not self.split_nums):
         #    return frames
         #else:
+            points = []
             min_num = 0
             max_num = self.split_nums[0]
             for i in range(len(self.split_nums)):
+                print('num: ',self.split_nums[i])
+                print('min num: ', min_num)
+                print('max num: ', max_num)
                 if(max_num - min_num > 50):
-                    print(self.split_nums[i])
+                    points.append(self.split_nums[i])
+                    print('command: ',self.split_nums[i])
                     min_num = self.split_nums[i]
                 else:
                     max_num = self.split_nums[i]
-        
+                
+                if(i==len(self.split_nums)-1):
+                    if(max_num - min_num > 50):
+                        points.append(self.split_nums[i])
+                        print('command: ',self.split_nums[i])
+            return points[0]
+
+            
+
         
 
     def get_frames_mouth(self, detector, predictor, frames):
@@ -219,7 +239,7 @@ class Video(object):
             print(self.sq[m],m)
             m = m + 1
 
-            if(m>25):
+            if(m>20):
                 split_frame = self.split(m)
                 if(split_frame != -1):
                     self.split_nums.append(split_frame)

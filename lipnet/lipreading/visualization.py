@@ -31,11 +31,13 @@ def show_video_subtitle(frames, subtitle):
         i += 1
 
 def show_square(sq,avg_sq):
-    plt.plot(sq)
-    plt.plot(avg_sq)
+    plt.figure()
+    f, axes = plt.subplots(2, 1)
+    axes[0].plot(sq)
+    axes[0].set_ylabel('square')
+    axes[1].plot(avg_sq)
+    axes[1].set_ylabel('disp')
 
-    plt.ylabel('square')
-    plt.xlabel('frame')
     plt.show()
 
 

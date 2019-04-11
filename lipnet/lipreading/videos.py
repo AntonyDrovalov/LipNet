@@ -169,16 +169,40 @@ class Video(object):
         det = det/2
         return det
 
-    def split(self,num_current,window_size=20, limit=50):
+
+    def split_dispertion(self,num_current,window_size=20, limit=700):
+        disp = 0
+        avg_sq = 0
+        for i in range(num_current - window_size,num_current):
+            avg_sq += self.sq[i]
+            disp += self.sq[i]**2
+
+        avg_sq = ((avg_sq)**2)/window_size
+        disp = (disp - avg_sq)/window_size
+        disp = np.sqrt(disp)
+
+        print('disp = ', disp)
+        self.avg_sq.append(disp)
+        
+        if(disp < limit):
+            print('added')
+            return num_current
+        else:
+            print('out')
+            return -1
+
+    # with average value
+    def split(self,num_current,window_size=20, limit=500):
         
         avg_sq = 0
         for i in range(num_current - window_size,num_current):
             avg_sq += self.sq[i]
         avg_sq = avg_sq/window_size
         self.avg_sq.append(avg_sq)
-
+        #print(avg_sq)
         
         if(abs(self.sq[num_current-1] - avg_sq) < limit):
+            #print('added')
             return num_current
         else:
             return -1
@@ -192,8 +216,8 @@ class Video(object):
             max_num = self.split_nums[0]
             for i in range(len(self.split_nums)):
                 print('num: ',self.split_nums[i])
-                print('min num: ', min_num)
-                print('max num: ', max_num)
+                #print('min num: ', min_num)
+                #print('max num: ', max_num)
                 if(max_num - min_num > 50):
                     points.append(self.split_nums[i])
                     print('command: ',self.split_nums[i])
@@ -240,7 +264,7 @@ class Video(object):
             m = m + 1
 
             if(m>20):
-                split_frame = self.split(m)
+                split_frame = self.split_dispertion(m)
                 if(split_frame != -1):
                     self.split_nums.append(split_frame)
                     print(split_frame)

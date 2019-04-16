@@ -124,11 +124,17 @@ class Video(object):
         self.handle_type(frames)
         return self
 
-    def from_video_test(self,path,x):
-        frames = self.get_video_frames(path)
-        frames = frames[0:x]
-        self.handle_type(frames)
-        return self
+    def from_video_test(self, path, x, y, last=False):
+        if(last):
+            frames = self.get_video_frames(path)
+            frames = frames[x:]
+            self.handle_type(frames)
+            return self
+        else:
+            frames = self.get_video_frames(path)
+            frames = frames[x:y]
+            self.handle_type(frames)
+            return self
 
     def from_array(self, frames):
         self.handle_type(frames)
@@ -170,7 +176,7 @@ class Video(object):
         return det
 
 
-    def split_dispertion(self,num_current,window_size=20, limit=700):
+    def split_dispertion(self,num_current,window_size=20, limit=750):
         disp = 0
         avg_sq = 0
         for i in range(num_current - window_size,num_current):
@@ -229,7 +235,7 @@ class Video(object):
                     if(max_num - min_num > 50):
                         points.append(self.split_nums[i])
                         print('command: ',self.split_nums[i])
-            return points[0]
+            return points
 
             
 

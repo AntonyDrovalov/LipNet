@@ -50,41 +50,63 @@ def split_dispertion(num_current,sq,window_size=20, limit=750):
         print('out')
         return -1
 
-def split_commands(split_nums):
-    #if(not self.split_nums):
-    #    return frames
-    #else:
-    points = []
-    min_num = 0
-    max_num = split_nums[0]
-    for i in range(len(split_nums)):
-        print('num: ',split_nums[i])
-        #print('min num: ', min_num)
-        #print('max num: ', max_num)
-        if(max_num - min_num > 50):
-            points.append(split_nums[i])
-            print('command: ',split_nums[i])
-            min_num = split_nums[i]
-        else:
-            max_num = split_nums[i]
-        
-        if(i==len(split_nums)-1):
-            if(max_num - min_num > 50):
-                points.append(split_nums[i])
-                print('command: ',split_nums[i])
-    return points
+def set_data(frames):
+    data_frames = []
+    for frame in frames:
+        frame = frame.swapaxes(0,1) # swap width and height to form format W x H x C
+        if len(frame.shape) < 3:
+            frame = np.array([frame]).swapaxes(0,2).swapaxes(0,1) # Add grayscale channel
+        data_frames.append(frame)
+    frames_n = len(data_frames)
+    data_frames = np.array(data_frames) # T x W x H x C
+    if K.image_data_format() == 'channels_first':
+        data_frames = np.rollaxis(data_frames, 3) # C x T x W x H
+    return data_frames
+    
 
+def predict_videos(video_data,weight_path, absolute_max_string_len=32, output_size=28):
+    if K.image_data_format() == 'channels_first':
+            img_c, frames_n, img_w, img_h = video_data.shape
+    else:
+        frames_n, img_w, img_h, img_c = video_data.shape
+
+
+    lipnet = LipNet(img_c=img_c, img_w=img_w, img_h=img_h, frames_n=frames_n,
+                    absolute_max_string_len=absolute_max_string_len, output_size=output_size)
+
+    adam = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+
+    lipnet.model.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=adam)
+    lipnet.model.load_weights(weight_path)
+
+    spell = Spell(path=PREDICT_DICTIONARY)
+    decoder = Decoder(greedy=PREDICT_GREEDY, beam_width=PREDICT_BEAM_WIDTH,
+                      postprocessors=[labels_to_text, spell.sentence])
+
+    X_data       = np.array([video_data]).astype(np.float32) / 255
+    input_length = np.array([len(video_data)])
+
+    y_pred         = lipnet.predict(X_data)
+    result         = decoder.decode(y_pred, input_length)[0]
+
+    return result
+
+PREDICT_GREEDY      = False
+PREDICT_BEAM_WIDTH  = 200
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+PREDICT_DICTIONARY  = os.path.join(CURRENT_PATH,'..','common','dictionaries','grid.txt')
+weight_path = 'models/overlapped-weights368.h5'
 face_predictor_path = os.path.join(CURRENT_PATH,'..','common','predictors','shape_predictor_68_face_landmarks.dat')
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(face_predictor_path)
 
 
 
+
 def stream(detector,predictor):
 
-    #cap = cv2.VideoCapture('1.mpg')
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture('1.mpg')
+    #cap = cv2.VideoCapture(0)
     mouth_frames = []
     sq = []
     split_nums = []
@@ -92,6 +114,9 @@ def stream(detector,predictor):
     MOUTH_HEIGHT = 50
     HORIZONTAL_PAD = 0.19
     normalize_ratio = None
+    min_num = 0
+    max_num = 0
+
 
     m = 0
     while(cap.isOpened()):
@@ -120,10 +145,22 @@ def stream(detector,predictor):
         m = m + 1
 
         if(m>20):
-            split_frame = split_dispertion(m,sq)
-            if(split_frame != -1):
-                split_nums.append(split_frame)
-                print(split_frame)
+            max_num = split_dispertion(m,sq)
+            if(max_num != -1):
+                split_nums.append(max_num)
+                print(max_num)
+                if(max_num - min_num > 50):
+                    print('COMMAND = ',max_num)
+                    video = mouth_frames[min_num:max_num]
+                    #print(video)
+                    video_data = set_data(video)
+                    #print(video_data)
+                    res = predict_videos(video_data,weight_path)
+                    print('RESULT: ' , res)
+                    min_num = max_num
+                    
+                
+
 
         mouth_centroid = np.mean(np_mouth_points[:, -2:], axis=0)
 
@@ -160,7 +197,7 @@ def stream(detector,predictor):
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-    split_commands(split_nums)
+    
 
     cap.release()
     cv2.destroyAllWindows()

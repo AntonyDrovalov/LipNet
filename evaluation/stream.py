@@ -26,8 +26,7 @@ def square_of_mouth(points):
     x1 = [points[l-1,0],points[l-1,1]]
     x2 = [points[0,0],points[0,1]]
     det += abs(np.linalg.det(a))
-    det = det/2
-    return det
+    return det/2
 
 def split_dispertion(num_current,sq,window_size=20, limit=750):
     disp = 0
@@ -36,9 +35,10 @@ def split_dispertion(num_current,sq,window_size=20, limit=750):
         avg_sq += sq[i]
         disp += sq[i]**2
 
-    avg_sq = ((avg_sq)**2)/window_size
-    disp = (disp - avg_sq)/window_size
-    disp = np.sqrt(disp)
+    #avg_sq = ((avg_sq)**2)/window_size
+    #disp = (disp - avg_sq)/window_size)
+    #disp = np.sqrt(disp)
+    disp = np.sqrt((disp - ((avg_sq)**2)/window_size)/window_size)
 
     print('disp = ', disp)
     #avg_sq.append(disp)
@@ -87,6 +87,10 @@ def predict_videos(video_data,weight_path, absolute_max_string_len=32, output_si
     input_length = np.array([len(video_data)])
 
     y_pred         = lipnet.predict(X_data)
+
+    #print(y_pred[0,0])
+    #print(y_pred[0,40])
+    
     result         = decoder.decode(y_pred, input_length)[0]
 
     return result
@@ -105,11 +109,11 @@ predictor = dlib.shape_predictor(face_predictor_path)
 
 def stream(detector,predictor):
 
-    cap = cv2.VideoCapture('1.mpg')
-    #cap = cv2.VideoCapture(0)
+    #cap = cv2.VideoCapture('1.mpg')
+    cap = cv2.VideoCapture(0)
     mouth_frames = []
     sq = []
-    split_nums = []
+    #split_nums = []
     MOUTH_WIDTH = 100
     MOUTH_HEIGHT = 50
     HORIZONTAL_PAD = 0.19
@@ -121,16 +125,20 @@ def stream(detector,predictor):
     m = 0
     while(cap.isOpened()):
         ret, frame = cap.read()
+        
         if(m==224):
             break
         # detection start
+        
         dets = detector(frame, 1)
+        '''
         shape = None
         for k, d in enumerate(dets):
             shape = predictor(frame, d)
             i = -1
         if shape is None: # Detector doesn't detect face, just return as is
             print('Cannot detect face')
+            continue
 
         mouth_points = []
         for part in shape.parts():
@@ -139,7 +147,8 @@ def stream(detector,predictor):
                 continue
             mouth_points.append((part.x,part.y))
         np_mouth_points = np.array(mouth_points)
-
+        '''
+        '''
         sq.append(square_of_mouth(np_mouth_points))
         print(sq[m],m)
         m = m + 1
@@ -147,7 +156,7 @@ def stream(detector,predictor):
         if(m>20):
             max_num = split_dispertion(m,sq)
             if(max_num != -1):
-                split_nums.append(max_num)
+                #split_nums.append(max_num)
                 print(max_num)
                 if(max_num - min_num > 50):
                     print('COMMAND = ',max_num)
@@ -194,6 +203,8 @@ def stream(detector,predictor):
         for item in np_mouth_points:
             cv2.circle(mouth_drawed_image,(int(item[0]),int(item[1])),5,(0,255,0))
         cv2.imshow('frame',mouth_drawed_image)
+        '''
+        cv2.imshow('frame',frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
